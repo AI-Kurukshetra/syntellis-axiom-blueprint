@@ -4,10 +4,10 @@ Initial project scaffold for the Healthcare Intelligence Hub defined in `.codex/
 
 This setup uses:
 
-- Next.js with App Router
-- TypeScript
-- Supabase for backend services, auth, and PostgreSQL
-- Vercel-ready deployment structure
+- Next.js with App Router.
+- TypeScript.
+- Supabase for backend services, auth, and PostgreSQL.
+- Vercel-ready deployment structure.
 
 ## Project Structure
 
