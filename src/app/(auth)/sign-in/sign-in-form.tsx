@@ -36,6 +36,17 @@ export function SignInForm({ redirectTo, urlError, urlMessage, confirmed }: Sign
         throw error;
       }
 
+      void fetch("/api/auth/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventType: "sign_in",
+          source: "sign_in_form",
+        }),
+      }).catch(() => null);
+
       router.replace(redirectTo);
       router.refresh();
     } catch (submitError) {

@@ -27,6 +27,7 @@ This file turns the SRS in `.codex/skills/project-requirement.md` and the curren
 - [x] `/workspace` now resolves the correct post-auth landing route from live access context
 - [x] Module placeholder pages are guarded by role-aware access checks
 - [x] `/api/organizations` now returns live organization access data and supports bootstrap creation
+- [x] `/api/organizations` now supports tenant settings updates
 - [x] `/api/users` now returns live organization user directory data and supports invitations
 - [x] Admin workspace now supports organization-scoped user invitations
 - [x] `/api/facilities` and `/api/departments` now expose typed hierarchy CRUD endpoints
@@ -38,6 +39,14 @@ This file turns the SRS in `.codex/skills/project-requirement.md` and the curren
 - [x] `/api/roles` now exposes typed custom-role CRUD and permission assignment endpoints
 - [x] Admin workspace now supports custom role management and permission composition
 - [x] Email confirmation now records invitation-acceptance and confirmation audit events
+- [x] `/api/kpis` now exposes typed KPI definition CRUD endpoints
+- [x] `/api/metrics` now exposes typed metric CRUD endpoints
+- [x] `/analytics` now renders a live KPI catalog with CRUD workflows
+- [x] `/analytics` now renders a live metric catalog with CRUD workflows
+- [x] `/api/kpis/[kpiId]/versions` now supports KPI version creation
+- [x] `/api/metrics/values` now supports metric value publication and scoped retrieval
+- [x] `/api/benchmarks` and `/api/targets` now support analytics reference management
+- [x] `/analytics` now supports KPI versioning, benchmark/target setup, metric publication, and freshness-aware value review
 - [x] Phase 1 RLS and role-permission seed migration is authored
 - [ ] Supabase RLS is implemented beyond `profiles`
 - [ ] Business logic APIs are implemented
@@ -49,7 +58,7 @@ This file turns the SRS in `.codex/skills/project-requirement.md` and the curren
 - [ ] Prefer shipping thin vertical slices over building all backend first
 - [ ] Add tests for every feature before marking a phase complete
 - [ ] Record schema changes as migrations only
-- [ ] Keep auditability in scope for all privileged or sensitive operations
+- [x] Keep auditability in scope for all privileged or sensitive operations
 
 ## Phase 0: Foundation Alignment
 
@@ -112,7 +121,7 @@ Enable administrators to manage the tenant hierarchy and user setup.
 
 - [x] Replace the `/admin` placeholder with a live tenant overview backed by profile, role, and hierarchy queries
 - [x] Add a real `/api/admin` route for tenant overview data
-- [ ] Build `/admin` organization settings page
+- [x] Build `/admin` organization settings page
 - [x] Build facility management UI backed by `facilities`
 - [x] Build department management UI backed by `departments`
 - [x] Build service line management UI backed by `service_lines`
@@ -120,10 +129,10 @@ Enable administrators to manage the tenant hierarchy and user setup.
 - [x] Build user invitation and activation flow
 - [x] Build role assignment UI
 - [x] Build custom role catalog UI and permission composition workflow
-- [ ] Add status/effective-date management for organization hierarchy records
-- [ ] Add audit trail views for admin mutations
-- [ ] Add retention and notification configuration settings
-- [ ] Add scheduled job settings management
+- [x] Add status/effective-date management for organization hierarchy records
+- [x] Add audit trail views for admin mutations
+- [x] Add retention and notification configuration settings
+- [x] Add scheduled job settings management
 
 ### Exit Criteria
 
@@ -163,21 +172,21 @@ Create the analytical core that powers dashboards, reports, alerts, and benchmar
 
 ### Tasks
 
-- [ ] Build CRUD UI for `kpi_definitions`
-- [ ] Build CRUD UI for `metrics`
-- [ ] Add versioning workflow for KPI definitions
-- [ ] Add effective-date handling for KPI and benchmark changes
-- [ ] Implement metric publishing flow into `metric_values`
-- [ ] Add lineage metadata capture from ingestion jobs to metric values
-- [ ] Add target and benchmark joins in the metric retrieval layer
-- [ ] Add reusable query helpers for organization, facility, and department scoped metrics
-- [ ] Add metric freshness and publication status handling
-- [ ] Add tests for KPI calculation and metric query logic
+- [x] Build CRUD UI for `kpi_definitions`
+- [x] Build CRUD UI for `metrics`
+- [x] Add versioning workflow for KPI definitions
+- [x] Add effective-date handling for KPI and benchmark changes
+- [x] Implement metric publishing flow into `metric_values`
+- [x] Add lineage metadata capture from ingestion jobs to metric values
+- [x] Add target and benchmark joins in the metric retrieval layer
+- [x] Add reusable query helpers for organization, facility, and department scoped metrics
+- [x] Add metric freshness and publication status handling
+- [x] Add tests for KPI calculation and metric query logic
 
 ### Exit Criteria
 
-- [ ] KPI definitions and metrics are manageable from the app
-- [ ] Metric values can be queried consistently for all downstream modules
+- [x] KPI definitions and metrics are manageable from the app
+- [x] Metric values can be queried consistently for all downstream modules
 
 ## Phase 5: Dashboard Workspace
 
@@ -187,21 +196,21 @@ Ship the first high-value end-user feature: role-based dashboards and executive 
 
 ### Tasks
 
-- [ ] Build real `/dashboard` data loading from `dashboards`, `dashboard_widgets`, and `metric_values`
-- [ ] Add role-based default dashboard selection
-- [ ] Add KPI summary cards with target and variance display
-- [ ] Add trend chart widgets
-- [ ] Add date range filtering
-- [ ] Add organization, facility, department, and service line filtering
-- [ ] Add widget configuration and persistence
-- [ ] Add drill-down from widget to metric detail
-- [ ] Add last-refresh and stale-data indicators
-- [ ] Add responsive dashboard behavior for tablet and mobile
+- [x] Build real `/dashboard` data loading from `dashboards`, `dashboard_widgets`, and `metric_values`
+- [x] Add role-based default dashboard selection
+- [x] Add KPI summary cards with target and variance display
+- [x] Add trend chart widgets
+- [x] Add date range filtering
+- [x] Add organization, facility, department, and service line filtering
+- [x] Add widget configuration and persistence
+- [x] Add drill-down from widget to metric detail
+- [x] Add last-refresh and stale-data indicators
+- [x] Add responsive dashboard behavior for tablet and mobile
 
 ### Exit Criteria
 
-- [ ] Executives and managers can use dashboards backed by real data
-- [ ] Filtering and drill-down work across tenant scopes
+- [x] Executives and managers can use dashboards backed by real data
+- [x] Filtering and drill-down work across tenant scopes
 
 ## Phase 6: Domain Analytics
 
@@ -211,20 +220,20 @@ Deliver curated analytics views for finance, clinical quality, operations, and r
 
 ### Tasks
 
-- [ ] Build `/analytics` overview shell with domain tabs
-- [ ] Implement financial analytics views using `financial_transactions` and budget data
-- [ ] Implement operational analytics views using occupancy, staffing, and throughput metrics
-- [ ] Implement clinical quality analytics views using encounter-driven KPIs
-- [ ] Implement revenue cycle analytics views for denials, collections, and A/R trends
-- [ ] Add benchmark overlays where available
-- [ ] Add drill-through to detailed records and supporting reports
-- [ ] Add saved filters or saved views for analysts
-- [ ] Add export hooks for current analytic views
+- [x] Build `/analytics` overview shell with domain tabs
+- [x] Implement financial analytics views using `financial_transactions` and budget data
+- [x] Implement operational analytics views using occupancy, staffing, and throughput metrics
+- [x] Implement clinical quality analytics views using encounter-driven KPIs
+- [x] Implement revenue cycle analytics views for denials, collections, and A/R trends
+- [x] Add benchmark overlays where available
+- [x] Add drill-through to detailed records and supporting reports
+- [x] Add saved filters or saved views for analysts
+- [x] Add export hooks for current analytic views
 
 ### Exit Criteria
 
-- [ ] Each required domain has a usable read-only analytics view
-- [ ] Analysts can filter, compare, and drill down by scope and time
+- [x] Each required domain has a usable read-only analytics view
+- [x] Analysts can filter, compare, and drill down by scope and time
 
 ## Phase 7: Reports and Scheduled Delivery
 
@@ -234,22 +243,22 @@ Enable self-service reporting, exports, and scheduled distribution.
 
 ### Tasks
 
-- [ ] Build `/reports` list page with ownership and visibility controls
-- [ ] Build report definition editor backed by `reports`
-- [ ] Implement report dataset and filter configuration
-- [ ] Implement tabular report rendering
-- [ ] Implement CSV export
+- [x] Build `/reports` list page with ownership and visibility controls
+- [x] Build report definition editor backed by `reports`
+- [x] Implement report dataset and filter configuration
+- [x] Implement tabular report rendering
+- [x] Implement CSV export
 - [ ] Implement PDF export
-- [ ] Implement scheduled delivery using `report_schedules`
-- [ ] Implement report execution tracking using `report_runs`
-- [ ] Add recipient access validation before scheduled delivery
-- [ ] Add in-app access to generated reports
-- [ ] Add audit logs for report runs and exports
+- [x] Implement scheduled delivery using `report_schedules`
+- [x] Implement report execution tracking using `report_runs`
+- [x] Add recipient access validation before scheduled delivery
+- [x] Add in-app access to generated reports
+- [x] Add audit logs for report runs and exports
 
 ### Exit Criteria
 
-- [ ] Users can create, save, run, export, and schedule reports
-- [ ] Report history and delivery status are visible in the app
+- [x] Users can create, save, run, export, and schedule reports
+- [x] Report history and delivery status are visible in the app
 
 ## Phase 8: Alerts and Notifications
 
@@ -283,19 +292,19 @@ Support oversight, audit evidence, and compliance review workflows.
 
 ### Tasks
 
-- [ ] Build `/compliance` audit search UI
-- [ ] Add filters for user, action, date range, facility, and entity type
-- [ ] Add export event logging and report access logging
-- [ ] Add predefined compliance report templates
+- [x] Build `/compliance` audit search UI
+- [x] Add filters for user, action, date range, facility, and entity type
+- [x] Add export event logging and report access logging
+- [x] Add predefined compliance report templates
 - [ ] Add sensitive field masking helpers based on role and classification
 - [ ] Add access review screens for privileged roles
-- [ ] Add report and dashboard access audit views
-- [ ] Add audit log pagination and performance tuning
+- [x] Add report and dashboard access audit views
+- [x] Add audit log pagination and performance tuning
 
 ### Exit Criteria
 
-- [ ] Compliance users can review and export audit evidence
-- [ ] Sensitive access events are searchable and attributable
+- [x] Compliance users can review and export audit evidence
+- [x] Sensitive access events are searchable and attributable
 
 ## Phase 10: Benchmarking, Targets, and Forecasting
 
@@ -305,10 +314,10 @@ Support performance comparison, target tracking, and planning scenarios.
 
 ### Tasks
 
-- [ ] Build `/benchmarks` overview page
-- [ ] Implement benchmark management using `benchmarks`
-- [ ] Implement target management using `targets`
-- [ ] Add variance analysis across actuals, targets, and benchmarks
+- [x] Build `/benchmarks` overview page
+- [x] Implement benchmark management using `benchmarks`
+- [x] Implement target management using `targets`
+- [x] Add variance analysis across actuals, targets, and benchmarks
 - [ ] Build facility comparison views
 - [ ] Build scenario management using `forecast_scenarios`
 - [ ] Build assumption editor using `forecast_assumptions`
@@ -335,7 +344,7 @@ Expose controlled integration APIs and add global product search.
 - [ ] Add reports and exports API
 - [ ] Add alerts API
 - [ ] Add users and admin API
-- [ ] Add global search across dashboards, reports, KPIs, facilities, and saved assets
+- [x] Add global search across dashboards, reports, KPIs, facilities, and saved assets
 - [ ] Add API audit logging and request tracing
 - [ ] Add rate limiting and abuse protection for external endpoints
 
@@ -376,7 +385,7 @@ Mark MVP complete only when these phases are done:
 - [ ] Phase 1: Identity, Tenant, and RBAC
 - [ ] Phase 2: Administration and Master Data
 - [ ] Phase 3: Data Sources, Integrations, and Data Quality
-- [ ] Phase 4: KPI Catalog and Metric Engine
+- [x] Phase 4: KPI Catalog and Metric Engine
 - [ ] Phase 5: Dashboard Workspace
 - [ ] Phase 7: Reports and Scheduled Delivery
 - [ ] Phase 8: Alerts and Notifications
@@ -389,5 +398,9 @@ Mark MVP complete only when these phases are done:
 - [x] Build admin user directory and profile review UI on top of the new `/api/users` endpoint
 - [x] Build service line CRUD and link hierarchy forms to service-line scoping
 - [x] Build custom role CRUD and permission composition workflows
-- [ ] Add audit logging for sign-in and remaining auth-session events
+- [x] Build KPI definition CRUD as the first Phase 4A vertical slice
+- [x] Build metric CRUD as the second Phase 4A vertical slice
+- [x] Complete the remaining Phase 4 analytics-core workflows
+- [x] Build the first live `/dashboard` workspace with persistent widgets and scoped filters
+- [x] Add audit logging for sign-in and remaining auth-session events
 - [x] Expand `/admin` into hierarchy, user provisioning, and role assignment workflows

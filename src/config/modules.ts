@@ -13,14 +13,14 @@ export const appModules: AppModuleDefinition[] = [
     label: "Analytics",
     description: "Financial, clinical, operational, and revenue cycle analytics.",
     href: "/analytics",
-    readiness: "scaffolded",
+    readiness: "implemented",
   },
   {
     key: "reports",
     label: "Reports",
     description: "Self-service reporting, exports, schedules, and templates.",
     href: "/reports",
-    readiness: "scaffolded",
+    readiness: "implemented",
   },
   {
     key: "alerts",
@@ -48,7 +48,7 @@ export const appModules: AppModuleDefinition[] = [
     label: "Benchmarks",
     description: "Targets, benchmarking, and planning scenarios.",
     href: "/benchmarks",
-    readiness: "scaffolded",
+    readiness: "implemented",
   },
   {
     key: "admin",

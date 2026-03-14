@@ -1,4 +1,4 @@
-import type { OrganizationBootstrapInput, TableInsert, UserProfile } from "@/types";
+import type { OrganizationBootstrapInput, OrganizationSettingsInput, TableInsert, UserProfile } from "@/types";
 
 import { safeLogAuditEvent } from "@/lib/audit";
 import { requireCurrentUserContext } from "@/lib/auth/current-user";
@@ -14,6 +14,43 @@ const systemAdministratorRoleSlug = "system-administrator";
 function normalizeOptional(value?: string | null) {
   const normalized = value?.trim();
   return normalized ? normalized : undefined;
+}
+
+function normalizeOptionalDate(value?: string | null) {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function buildOperationalSettingsMetadata(
+  existingMetadata: Record<string, unknown> | null | undefined,
+  input: OrganizationSettingsInput
+) {
+  const metadata = existingMetadata && typeof existingMetadata === "object" && !Array.isArray(existingMetadata) ? existingMetadata : {};
+  const existingAdminSettings =
+    "adminSettings" in metadata && metadata.adminSettings && typeof metadata.adminSettings === "object" && !Array.isArray(metadata.adminSettings)
+      ? (metadata.adminSettings as Record<string, unknown>)
+      : {};
+
+  return {
+    ...metadata,
+    adminSettings: {
+      ...existingAdminSettings,
+      retention: {
+        auditRetentionDays: input.auditRetentionDays ?? 365,
+        reportRetentionDays: input.reportRetentionDays ?? 180,
+      },
+      notifications: {
+        defaultNotificationEmail: normalizeOptional(input.defaultNotificationEmail) ?? normalizeOptional(input.contactEmail) ?? null,
+        digestNotificationsEnabled: input.digestNotificationsEnabled ?? false,
+        alertEscalationEnabled: input.alertEscalationEnabled ?? false,
+      },
+      scheduledJobs: {
+        dashboardRefreshIntervalMinutes: input.dashboardRefreshIntervalMinutes ?? 60,
+        nightlySyncHourUtc: input.nightlySyncHourUtc ?? 2,
+        reportScheduleHourUtc: input.reportScheduleHourUtc ?? 6,
+      },
+    },
+  };
 }
 
 function buildOrganizationSlug(name: string, providedSlug?: string) {
@@ -118,6 +155,44 @@ export async function bootstrapOrganizationForCurrentUser(input: OrganizationBoo
     metadata: {
       slug: organization.slug,
       assigned_role_slug: systemAdministratorRole.slug,
+    },
+  });
+
+  return organization;
+}
+
+export async function updateCurrentOrganizationSettings(input: OrganizationSettingsInput) {
+  const currentUser = await requireCurrentUserContext();
+  const organizationId = currentUser.profile?.organization_id;
+
+  if (!currentUser.canManageAdministration || !organizationId || !currentUser.organization) {
+    throw new ForbiddenError("Administrative access is required to update organization settings.");
+  }
+
+  const adminClient = getSupabaseAdminClient();
+  const organization = await organizationRepository.updateOrganization(adminClient, organizationId, {
+    name: input.name.trim(),
+    legal_name: normalizeOptional(input.legalName) ?? null,
+    timezone: input.timezone.trim(),
+    contact_email: normalizeOptional(input.contactEmail) ?? null,
+    status: input.status ?? currentUser.organization.status,
+    metadata: buildOperationalSettingsMetadata(currentUser.organization.metadata as Record<string, unknown> | null | undefined, input),
+    effective_from: normalizeOptionalDate(input.effectiveFrom),
+    effective_to: normalizeOptionalDate(input.effectiveTo),
+  });
+
+  await safeLogAuditEvent({
+    organizationId: organization.id,
+    actorUserId: currentUser.authUser.id,
+    action: "organization.updated",
+    entityType: "organization",
+    entityId: organization.id,
+    scopeLevel: "organization",
+    metadata: {
+      status: organization.status,
+      timezone: organization.timezone,
+      contact_email: organization.contact_email,
+      admin_settings: organization.metadata,
     },
   });
 

@@ -19,9 +19,14 @@ export async function getSupabaseServerClient() {
         return cookieStore.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options);
-        });
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options);
+          });
+        } catch {
+          // Server Component render paths cannot mutate cookies. Middleware and
+          // route/action handlers still handle session refresh and persistence.
+        }
       },
     },
   });

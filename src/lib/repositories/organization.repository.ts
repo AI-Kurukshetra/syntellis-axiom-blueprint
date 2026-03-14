@@ -36,6 +36,17 @@ export const organizationRepository = {
     );
   },
 
+  async updateOrganization(
+    client: AppSupabaseClient,
+    organizationId: string,
+    organization: TableUpdate<"organizations">
+  ): Promise<Organization> {
+    return unwrapSingle(
+      await client.from("organizations").update(organization).eq("id", organizationId).select("*").single(),
+      "Failed to update organization."
+    );
+  },
+
   async listOrganizations(client: AppSupabaseClient, organizationId?: string | null): Promise<Organization[]> {
     const query = client.from("organizations").select("*").order("name");
 

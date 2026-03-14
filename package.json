@@ -10,7 +10,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:types": "node scripts/generate-database-types.mjs",
-    "db:types:check": "node scripts/generate-database-types.mjs --check"
+    "db:types:check": "node scripts/generate-database-types.mjs --check",
+    "db:seed:mock": "node scripts/seed-mock-data.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "latest",

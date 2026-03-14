@@ -18,7 +18,12 @@ import {
   createDepartmentAction,
   createFacilityAction,
   createServiceLineAction,
+  deleteDepartmentAction,
+  deleteFacilityAction,
   deleteServiceLineAction,
+  updateDepartmentAction,
+  updateFacilityAction,
+  updateServiceLineAction,
 } from "@/features/hierarchy/hierarchy.actions";
 import { getHierarchyManagementContext } from "@/features/hierarchy/hierarchy.service";
 import {
@@ -29,6 +34,7 @@ import {
   updateRoleAction,
 } from "@/features/roles/role.actions";
 import { listRoleCatalog } from "@/features/roles/role.service";
+import { updateOrganizationSettingsAction } from "@/features/organizations/organization.actions";
 import {
   assignUserDepartmentAction,
   assignUserFacilityAction,
@@ -43,6 +49,14 @@ import { listOrganizationUsers } from "@/features/users/user.service";
 import { requireModuleAccess } from "@/lib/auth/authorization";
 
 const userStatusOptions = ["pending", "active", "inactive", "suspended"] as const;
+const organizationStatusOptions = ["draft", "active", "inactive"] as const;
+const timezoneOptions = [
+  { value: "America/New_York", label: "Eastern Time (America/New_York)" },
+  { value: "America/Chicago", label: "Central Time (America/Chicago)" },
+  { value: "America/Denver", label: "Mountain Time (America/Denver)" },
+  { value: "America/Los_Angeles", label: "Pacific Time (America/Los_Angeles)" },
+  { value: "UTC", label: "UTC" },
+];
 
 type CollectionSectionProps = {
   eyebrow: string;
@@ -559,6 +573,37 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
   const headerDescription = `Manage hierarchy, user access, service-line scoping, and operational controls for ${overview.organization?.name ?? "the current tenant"}.`;
   const currentUserName = overview.currentUser?.profile?.full_name ?? overview.currentUser?.authUser.email ?? "No active user session";
   const roleSummary = overview.roles.slice(0, 4).map((role) => role.name).join(", ") || "No roles available yet";
+  const organizationAdminSettings =
+    overview.organization?.metadata &&
+    typeof overview.organization.metadata === "object" &&
+    !Array.isArray(overview.organization.metadata) &&
+    "adminSettings" in overview.organization.metadata &&
+    overview.organization.metadata.adminSettings &&
+    typeof overview.organization.metadata.adminSettings === "object" &&
+    !Array.isArray(overview.organization.metadata.adminSettings)
+      ? overview.organization.metadata.adminSettings
+      : {};
+  const retentionSettings =
+    "retention" in organizationAdminSettings &&
+    organizationAdminSettings.retention &&
+    typeof organizationAdminSettings.retention === "object" &&
+    !Array.isArray(organizationAdminSettings.retention)
+      ? organizationAdminSettings.retention
+      : {};
+  const notificationSettings =
+    "notifications" in organizationAdminSettings &&
+    organizationAdminSettings.notifications &&
+    typeof organizationAdminSettings.notifications === "object" &&
+    !Array.isArray(organizationAdminSettings.notifications)
+      ? organizationAdminSettings.notifications
+      : {};
+  const scheduledJobSettings =
+    "scheduledJobs" in organizationAdminSettings &&
+    organizationAdminSettings.scheduledJobs &&
+    typeof organizationAdminSettings.scheduledJobs === "object" &&
+    !Array.isArray(organizationAdminSettings.scheduledJobs)
+      ? organizationAdminSettings.scheduledJobs
+      : {};
   const statCards = [
     { label: "Organizations", value: overview.counts.organizations, note: "Tenant records available to the current scope." },
     { label: "Facilities", value: overview.counts.facilities, note: "Operational sites configured for reporting and access." },
@@ -648,6 +693,196 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
               <p>{roleSummary}</p>
             </article>
           </div>
+        </section>
+
+        <section className="panel">
+          <div className="section-header">
+            <div>
+              <span className="eyebrow">Organization settings</span>
+              <h2 className="section-title">Update tenant identity, lifecycle, and operating defaults.</h2>
+            </div>
+            <p className="section-copy">
+              These values drive tenant context, contact metadata, and default timezone behavior across the workspace.
+            </p>
+          </div>
+
+          {overview.organization ? (
+            <form action={updateOrganizationSettingsAction} className="form-stack">
+              <div className="form-grid">
+                <label className="field" htmlFor="organizationName">
+                  <span className="field-label">Organization name</span>
+                  <input id="organizationName" name="name" type="text" defaultValue={overview.organization.name} required />
+                </label>
+
+                <label className="field" htmlFor="organizationLegalName">
+                  <span className="field-label">Legal name</span>
+                  <input id="organizationLegalName" name="legalName" type="text" defaultValue={overview.organization.legal_name ?? ""} />
+                </label>
+
+                <label className="field" htmlFor="organizationTimezone">
+                  <span className="field-label">Timezone</span>
+                  <select id="organizationTimezone" name="timezone" defaultValue={overview.organization.timezone}>
+                    {timezoneOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="field" htmlFor="organizationStatus">
+                  <span className="field-label">Status</span>
+                  <select id="organizationStatus" name="status" defaultValue={overview.organization.status}>
+                    {organizationStatusOptions.map((status) => (
+                      <option key={status} value={status}>
+                        {titleCaseScope(status)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="field" htmlFor="organizationContactEmail">
+                  <span className="field-label">Contact email</span>
+                  <input
+                    id="organizationContactEmail"
+                    name="contactEmail"
+                    type="email"
+                    defaultValue={overview.organization.contact_email ?? ""}
+                    placeholder="ops@healthsystem.com"
+                  />
+                </label>
+
+                <label className="field" htmlFor="organizationSlug">
+                  <span className="field-label">Slug</span>
+                  <input id="organizationSlug" type="text" value={overview.organization.slug} disabled readOnly />
+                </label>
+
+                <label className="field" htmlFor="organizationEffectiveFrom">
+                  <span className="field-label">Effective from</span>
+                  <input
+                    id="organizationEffectiveFrom"
+                    name="effectiveFrom"
+                    type="date"
+                    defaultValue={overview.organization.effective_from ?? ""}
+                  />
+                </label>
+
+                <label className="field" htmlFor="organizationEffectiveTo">
+                  <span className="field-label">Effective to</span>
+                  <input
+                    id="organizationEffectiveTo"
+                    name="effectiveTo"
+                    type="date"
+                    defaultValue={overview.organization.effective_to ?? ""}
+                  />
+                </label>
+
+                <label className="field" htmlFor="auditRetentionDays">
+                  <span className="field-label">Audit retention (days)</span>
+                  <input
+                    id="auditRetentionDays"
+                    name="auditRetentionDays"
+                    type="number"
+                    min="1"
+                    max="3650"
+                    defaultValue={String((retentionSettings.auditRetentionDays as number | undefined) ?? 365)}
+                  />
+                </label>
+
+                <label className="field" htmlFor="reportRetentionDays">
+                  <span className="field-label">Report retention (days)</span>
+                  <input
+                    id="reportRetentionDays"
+                    name="reportRetentionDays"
+                    type="number"
+                    min="1"
+                    max="3650"
+                    defaultValue={String((retentionSettings.reportRetentionDays as number | undefined) ?? 180)}
+                  />
+                </label>
+
+                <label className="field" htmlFor="defaultNotificationEmail">
+                  <span className="field-label">Notification inbox</span>
+                  <input
+                    id="defaultNotificationEmail"
+                    name="defaultNotificationEmail"
+                    type="email"
+                    defaultValue={String((notificationSettings.defaultNotificationEmail as string | undefined) ?? overview.organization.contact_email ?? "")}
+                    placeholder="alerts@healthsystem.com"
+                  />
+                </label>
+
+                <label className="field" htmlFor="dashboardRefreshIntervalMinutes">
+                  <span className="field-label">Dashboard refresh cadence (minutes)</span>
+                  <input
+                    id="dashboardRefreshIntervalMinutes"
+                    name="dashboardRefreshIntervalMinutes"
+                    type="number"
+                    min="5"
+                    max="1440"
+                    defaultValue={String((scheduledJobSettings.dashboardRefreshIntervalMinutes as number | undefined) ?? 60)}
+                  />
+                </label>
+
+                <label className="field" htmlFor="nightlySyncHourUtc">
+                  <span className="field-label">Nightly sync hour (UTC)</span>
+                  <input
+                    id="nightlySyncHourUtc"
+                    name="nightlySyncHourUtc"
+                    type="number"
+                    min="0"
+                    max="23"
+                    defaultValue={String((scheduledJobSettings.nightlySyncHourUtc as number | undefined) ?? 2)}
+                  />
+                </label>
+
+                <label className="field" htmlFor="reportScheduleHourUtc">
+                  <span className="field-label">Scheduled report hour (UTC)</span>
+                  <input
+                    id="reportScheduleHourUtc"
+                    name="reportScheduleHourUtc"
+                    type="number"
+                    min="0"
+                    max="23"
+                    defaultValue={String((scheduledJobSettings.reportScheduleHourUtc as number | undefined) ?? 6)}
+                  />
+                </label>
+
+                <label className="field field--full" htmlFor="digestNotificationsEnabled">
+                  <span className="field-label">Digest notifications</span>
+                  <input
+                    id="digestNotificationsEnabled"
+                    name="digestNotificationsEnabled"
+                    type="checkbox"
+                    defaultChecked={Boolean(notificationSettings.digestNotificationsEnabled)}
+                  />
+                </label>
+
+                <label className="field field--full" htmlFor="alertEscalationEnabled">
+                  <span className="field-label">Alert escalation</span>
+                  <input
+                    id="alertEscalationEnabled"
+                    name="alertEscalationEnabled"
+                    type="checkbox"
+                    defaultChecked={Boolean(notificationSettings.alertEscalationEnabled)}
+                  />
+                </label>
+              </div>
+
+              <div className="surface-note">
+                <strong>Lifecycle controls</strong>
+                Status, effective dates, retention windows, notification defaults, and scheduled job timing are all editable from the admin surface. Slug remains read-only to avoid breaking tenant routing.
+              </div>
+
+              <div className="form-actions">
+                <button className="button button-primary" type="submit">
+                  Save organization settings
+                </button>
+              </div>
+            </form>
+          ) : (
+            <p className="collection-empty">No organization is assigned yet. Complete bootstrap before updating tenant settings.</p>
+          )}
         </section>
 
         <section className="panel">
@@ -985,13 +1220,81 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <span className="meta-row__value">{serviceLine.description ?? "Not set"}</span>
               </div>
             </div>
-            <div className="form-actions">
-              <form action={deleteServiceLineAction}>
+            <div className="panel-stack">
+              <form action={updateServiceLineAction} className="form-stack">
                 <input type="hidden" name="serviceLineId" value={serviceLine.id} />
-                <button className="button button-secondary" type="submit">
-                  Remove service line
-                </button>
+                <div className="form-grid">
+                  <label className="field" htmlFor={`service-line-name-${serviceLine.id}`}>
+                    <span className="field-label">Name</span>
+                    <input id={`service-line-name-${serviceLine.id}`} name="name" type="text" defaultValue={serviceLine.name} required />
+                  </label>
+                  <label className="field" htmlFor={`service-line-code-${serviceLine.id}`}>
+                    <span className="field-label">Code</span>
+                    <input id={`service-line-code-${serviceLine.id}`} name="code" type="text" defaultValue={serviceLine.code} required />
+                  </label>
+                  <label className="field" htmlFor={`service-line-facility-${serviceLine.id}`}>
+                    <span className="field-label">Facility scope</span>
+                    <select id={`service-line-facility-${serviceLine.id}`} name="facilityId" defaultValue={serviceLine.facility_id ?? ""}>
+                      <option value="">Organization-wide</option>
+                      {hierarchy.facilities.map((facility) => (
+                        <option key={facility.id} value={facility.id}>
+                          {facility.name} - {facility.code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`service-line-status-${serviceLine.id}`}>
+                    <span className="field-label">Status</span>
+                    <select id={`service-line-status-${serviceLine.id}`} name="status" defaultValue={serviceLine.status}>
+                      {organizationStatusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {titleCaseScope(status)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`service-line-effective-from-${serviceLine.id}`}>
+                    <span className="field-label">Effective from</span>
+                    <input
+                      id={`service-line-effective-from-${serviceLine.id}`}
+                      name="effectiveFrom"
+                      type="date"
+                      defaultValue={serviceLine.effective_from ?? ""}
+                    />
+                  </label>
+                  <label className="field" htmlFor={`service-line-effective-to-${serviceLine.id}`}>
+                    <span className="field-label">Effective to</span>
+                    <input
+                      id={`service-line-effective-to-${serviceLine.id}`}
+                      name="effectiveTo"
+                      type="date"
+                      defaultValue={serviceLine.effective_to ?? ""}
+                    />
+                  </label>
+                  <label className="field field--full" htmlFor={`service-line-description-${serviceLine.id}`}>
+                    <span className="field-label">Description</span>
+                    <input
+                      id={`service-line-description-${serviceLine.id}`}
+                      name="description"
+                      type="text"
+                      defaultValue={serviceLine.description ?? ""}
+                    />
+                  </label>
+                </div>
+                <div className="form-actions">
+                  <button className="button button-primary" type="submit">
+                    Save service line
+                  </button>
+                </div>
               </form>
+              <div className="form-actions">
+                <form action={deleteServiceLineAction}>
+                  <input type="hidden" name="serviceLineId" value={serviceLine.id} />
+                  <button className="button button-secondary" type="submit">
+                    Remove service line
+                  </button>
+                </form>
+              </div>
             </div>
           </article>
         ))}
@@ -1027,6 +1330,80 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 </span>
               </div>
             </div>
+            <div className="panel-stack">
+              <form action={updateFacilityAction} className="form-stack">
+                <input type="hidden" name="facilityId" value={facility.id} />
+                <div className="form-grid">
+                  <label className="field" htmlFor={`facility-name-${facility.id}`}>
+                    <span className="field-label">Name</span>
+                    <input id={`facility-name-${facility.id}`} name="name" type="text" defaultValue={facility.name} required />
+                  </label>
+                  <label className="field" htmlFor={`facility-code-${facility.id}`}>
+                    <span className="field-label">Code</span>
+                    <input id={`facility-code-${facility.id}`} name="code" type="text" defaultValue={facility.code} required />
+                  </label>
+                  <label className="field" htmlFor={`facility-type-${facility.id}`}>
+                    <span className="field-label">Type</span>
+                    <input id={`facility-type-${facility.id}`} name="facilityType" type="text" defaultValue={facility.facility_type ?? ""} />
+                  </label>
+                  <label className="field" htmlFor={`facility-service-line-${facility.id}`}>
+                    <span className="field-label">Primary service line</span>
+                    <select id={`facility-service-line-${facility.id}`} name="serviceLineId" defaultValue={facility.service_line_id ?? ""}>
+                      <option value="">None</option>
+                      {hierarchy.serviceLines.map((serviceLine) => (
+                        <option key={serviceLine.id} value={serviceLine.id}>
+                          {serviceLine.name}
+                          {serviceLine.facility_id ? ` - ${facilityNameById.get(serviceLine.facility_id) ?? serviceLine.facility_id}` : " - Org scope"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`facility-timezone-${facility.id}`}>
+                    <span className="field-label">Timezone</span>
+                    <input id={`facility-timezone-${facility.id}`} name="timezone" type="text" defaultValue={facility.timezone} required />
+                  </label>
+                  <label className="field" htmlFor={`facility-status-${facility.id}`}>
+                    <span className="field-label">Status</span>
+                    <select id={`facility-status-${facility.id}`} name="status" defaultValue={facility.status}>
+                      {organizationStatusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {titleCaseScope(status)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`facility-city-${facility.id}`}>
+                    <span className="field-label">City</span>
+                    <input id={`facility-city-${facility.id}`} name="city" type="text" defaultValue={facility.city ?? ""} />
+                  </label>
+                  <label className="field" htmlFor={`facility-state-${facility.id}`}>
+                    <span className="field-label">State or region</span>
+                    <input id={`facility-state-${facility.id}`} name="stateRegion" type="text" defaultValue={facility.state_region ?? ""} />
+                  </label>
+                  <label className="field" htmlFor={`facility-effective-from-${facility.id}`}>
+                    <span className="field-label">Effective from</span>
+                    <input id={`facility-effective-from-${facility.id}`} name="effectiveFrom" type="date" defaultValue={facility.effective_from ?? ""} />
+                  </label>
+                  <label className="field" htmlFor={`facility-effective-to-${facility.id}`}>
+                    <span className="field-label">Effective to</span>
+                    <input id={`facility-effective-to-${facility.id}`} name="effectiveTo" type="date" defaultValue={facility.effective_to ?? ""} />
+                  </label>
+                </div>
+                <div className="form-actions">
+                  <button className="button button-primary" type="submit">
+                    Save facility
+                  </button>
+                </div>
+              </form>
+              <div className="form-actions">
+                <form action={deleteFacilityAction}>
+                  <input type="hidden" name="facilityId" value={facility.id} />
+                  <button className="button button-secondary" type="submit">
+                    Remove facility
+                  </button>
+                </form>
+              </div>
+            </div>
           </article>
         ))}
       />
@@ -1058,6 +1435,91 @@ export default async function AdminPage({ searchParams }: AdminPageProps) {
                 <span className="meta-row__value">
                   {department.service_line_id ? serviceLineNameById.get(department.service_line_id) ?? department.service_line_id : "None"}
                 </span>
+              </div>
+            </div>
+            <div className="panel-stack">
+              <form action={updateDepartmentAction} className="form-stack">
+                <input type="hidden" name="departmentId" value={department.id} />
+                <div className="form-grid">
+                  <label className="field" htmlFor={`department-name-${department.id}`}>
+                    <span className="field-label">Name</span>
+                    <input id={`department-name-${department.id}`} name="name" type="text" defaultValue={department.name} required />
+                  </label>
+                  <label className="field" htmlFor={`department-code-${department.id}`}>
+                    <span className="field-label">Code</span>
+                    <input id={`department-code-${department.id}`} name="code" type="text" defaultValue={department.code} required />
+                  </label>
+                  <label className="field" htmlFor={`department-facility-${department.id}`}>
+                    <span className="field-label">Facility</span>
+                    <select id={`department-facility-${department.id}`} name="facilityId" defaultValue={department.facility_id}>
+                      {hierarchy.facilities.map((facility) => (
+                        <option key={facility.id} value={facility.id}>
+                          {facility.name} - {facility.code}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`department-service-line-${department.id}`}>
+                    <span className="field-label">Service line</span>
+                    <select id={`department-service-line-${department.id}`} name="serviceLineId" defaultValue={department.service_line_id ?? ""}>
+                      <option value="">None</option>
+                      {hierarchy.serviceLines.map((serviceLine) => (
+                        <option key={serviceLine.id} value={serviceLine.id}>
+                          {serviceLine.name}
+                          {serviceLine.facility_id ? ` - ${facilityNameById.get(serviceLine.facility_id) ?? serviceLine.facility_id}` : " - Org scope"}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`department-parent-${department.id}`}>
+                    <span className="field-label">Parent department</span>
+                    <select id={`department-parent-${department.id}`} name="parentDepartmentId" defaultValue={department.parent_department_id ?? ""}>
+                      <option value="">None</option>
+                      {hierarchy.departments
+                        .filter((candidate) => candidate.id !== department.id)
+                        .map((candidate) => (
+                          <option key={candidate.id} value={candidate.id}>
+                            {candidate.name} - {facilityNameById.get(candidate.facility_id) ?? candidate.facility_id}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`department-status-${department.id}`}>
+                    <span className="field-label">Status</span>
+                    <select id={`department-status-${department.id}`} name="status" defaultValue={department.status}>
+                      {organizationStatusOptions.map((status) => (
+                        <option key={status} value={status}>
+                          {titleCaseScope(status)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="field" htmlFor={`department-effective-from-${department.id}`}>
+                    <span className="field-label">Effective from</span>
+                    <input id={`department-effective-from-${department.id}`} name="effectiveFrom" type="date" defaultValue={department.effective_from ?? ""} />
+                  </label>
+                  <label className="field" htmlFor={`department-effective-to-${department.id}`}>
+                    <span className="field-label">Effective to</span>
+                    <input id={`department-effective-to-${department.id}`} name="effectiveTo" type="date" defaultValue={department.effective_to ?? ""} />
+                  </label>
+                  <label className="field field--full" htmlFor={`department-description-${department.id}`}>
+                    <span className="field-label">Description</span>
+                    <input id={`department-description-${department.id}`} name="description" type="text" defaultValue={department.description ?? ""} />
+                  </label>
+                </div>
+                <div className="form-actions">
+                  <button className="button button-primary" type="submit">
+                    Save department
+                  </button>
+                </div>
+              </form>
+              <div className="form-actions">
+                <form action={deleteDepartmentAction}>
+                  <input type="hidden" name="departmentId" value={department.id} />
+                  <button className="button button-secondary" type="submit">
+                    Remove department
+                  </button>
+                </form>
               </div>
             </div>
           </article>

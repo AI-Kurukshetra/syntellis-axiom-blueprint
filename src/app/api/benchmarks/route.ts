@@ -1,6 +1,16 @@
-import { createPlaceholderRoute } from "@/lib/route-helpers";
+import { created, ok } from "@/lib/api-response";
+import { withRouteHandler } from "@/lib/route-helpers";
+import { validateInput } from "@/lib/validation";
+import { benchmarkSchema } from "@/features/kpis/reference.schemas";
+import { createBenchmark, listBenchmarkCatalog } from "@/features/kpis/reference.service";
 
-const handlers = createPlaceholderRoute("benchmarks");
+export const GET = withRouteHandler(async () => {
+  const catalog = await listBenchmarkCatalog();
+  return ok(catalog);
+});
 
-export const GET = handlers.GET;
-export const POST = handlers.POST;
+export const POST = withRouteHandler(async (request: Request) => {
+  const input = validateInput(benchmarkSchema, await request.json());
+  const benchmark = await createBenchmark(input);
+  return created({ benchmark });
+});
